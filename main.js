@@ -50,6 +50,16 @@ app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 if (process.platform === 'linux') {
   app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
 
+  // Fix rendering on hybrid GPU (AMD iGPU + NVIDIA dGPU) under Wayland:
+  // prevent Chromium from falling back to the software renderer (SwiftShader)
+  // and ensure GPU rasterization is active.
+  app.commandLine.appendSwitch('ignore-gpu-blocklist');
+  app.commandLine.appendSwitch('enable-gpu-rasterization');
+  app.commandLine.appendSwitch('enable-zero-copy');
+  app.commandLine.appendSwitch('use-gl', 'desktop');
+  // Hardware video decoding on AMD (VAAPI)
+  app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder,VaapiVideoEncoder');
+
   // Enforce Adwaita GTK window decorations (buttons and frame) only when genuinely in GNOME mode
   const de = (
     process.env.XDG_CURRENT_DESKTOP ||
@@ -2834,7 +2844,8 @@ app.whenReady().then(async () => {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      backgroundThrottling: false
     }
   });
 
